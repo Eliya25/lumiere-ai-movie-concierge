@@ -20,10 +20,18 @@ const promtTemplate = ChatPromptTemplate.fromMessages([
         -user's request
         -genre
         -mood
-        -count
+        -count (return exactly this number of movies)
         
-        Every movie should fell intentional.
-        Do not recommend only the most obvious titles every time.`
+        Selection rules:
+        - Return exactly the requested number of real, released feature films.
+        - Treat the user's wording as the primary signal; genre and mood are supporting constraints.
+        - Every selection must clearly match the requested viewing experience.
+        - Prefer a coherent shortlist over novelty. Include less-obvious titles only when they are a strong match.
+        - Do not invent scenes, weather, plot events, awards, cast members, release years, or ratings.
+        - Explain the match using the film's tone, themes, pacing, and viewing experience.
+        - Make each reason specific to the user's request, concise, and distinct from the other reasons.
+        - If the user asks for a rainy-night film, interpret that as a desired viewing atmosphere unless rain is truly part of the film.
+        - Use "Any genre" as no genre restriction.`
 
     ],
     [
@@ -70,7 +78,8 @@ export async function getStructuredRecommendations(input: {userPrompt: string; g
 
     })
 
-    console.log(result)
-
-    return result
+    return {
+        ...result,
+        movies: result.movies.slice(0, input.count)
+    }
 }

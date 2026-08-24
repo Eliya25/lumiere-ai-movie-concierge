@@ -1,25 +1,29 @@
 import type { Request, Response } from "express";
 import { getStructuredRecommendations } from "../service/langchain.service.js";
+import { RecommendRequestSchema } from "../schemas/movie.schema.js";
+import { enrichMoviesWithTmdb } from "../service/tmdb.service.js";
 
 
 export async function recommendedMovies(req: Request, res: Response){
-    try {
-        const {
-            userPrompt = "Suggest movies for a rainy night",
-            genre = "thriller",
-            mode = "relaxed",
-            count = 2
-        } = req.body;
+    const parsedRequest = RecommendRequestSchema.safeParse(req.body)
 
-        const result = await getStructuredRecommendations({
-            userPrompt,genre,mode, count : Number(count)
+    if (!parsedRequest.success) {
+        res.status(400).json({
+            error: "Invalid request payload",
+            details: parsedRequest.error.flatten().fieldErrors
         })
+        return
+    }
 
-        res.json(result)
+    try {
+        const result = await getStructuredRecommendations(parsedRequest.data)
+        const movies = await enrichMoviesWithTmdb(result.movies)
+
+        res.json({ ...result, movies })
         
     } catch (error) {
-        console.log(error)
-        res.status(500).json({error: "Something goes wrong"})
+        console.error("Recommendation request failed", error)
+        res.status(500).json({error: "Unable to create recommendations right now"})
         
     }
 }

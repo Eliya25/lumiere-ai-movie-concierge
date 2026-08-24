@@ -15,9 +15,18 @@ export const MovieSchema = z.object({
 })
 
 export const RecommendationsSchema = z.object({
-    movies : z.array(MovieSchema).describe("List of recommended movies")
+    movies : z.array(MovieSchema).min(1).max(6).describe("List of recommended movies")
 })
+
+export const RecommendRequestSchema = z.object({
+    userPrompt: z.string().trim().min(12).max(500),
+    genre: z.string().trim().min(1).max(50),
+    mode: z.string().trim().min(1).max(50),
+    count: z.number().int().min(1).max(6)
+}).strict()
 
 export type Movie = z.infer<typeof MovieSchema>
 
 export type Recommendation = z.infer<typeof RecommendationsSchema>
+
+export type RecommendRequest = z.infer<typeof RecommendRequestSchema>
