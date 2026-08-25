@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation } from '@tanstack/react-query'
@@ -9,7 +9,9 @@ import { Button } from '@/components/ui/button'
 import { ConciergeForm } from '@/components/concierge-form'
 import { MovieCard } from '@/components/movie-card'
 import { MovieSkeleton } from '@/components/movie-skeleton'
-import { requestRecommendations } from '@/api/recommendations'
+import { LoadingHeading } from '@/components/loading-heading'
+import { RefineControls, type Refinement } from '@/components/refine-controls'
+import { requestRecommendations, type RecommendationRequest } from '@/api/recommendations'
 
 const formSchema = z.object({
   userPrompt: z.string().trim().min(12, 'Give us a little more detail (at least 12 characters).').max(500),
@@ -20,6 +22,9 @@ const defaultValues: FormValues = { userPrompt:'', genre:'Any genre', mode:'Atmo
 
 export default function App() {
   const [submitted, setSubmitted] = useState<FormValues | null>(null)
+  const [lastRequest, setLastRequest] = useState<RecommendationRequest | null>(null)
+  const [activeRefinement, setActiveRefinement] = useState<string | null>(null)
+  const resultsRef = useRef<HTMLElement>(null)
   const reduceMotion = useReducedMotion()
   const form = useForm<FormValues>({ resolver:zodResolver(formSchema), defaultValues })
   const recommendation = useMutation({ mutationFn: requestRecommendations })
@@ -27,7 +32,23 @@ export default function App() {
 
   const submit = (values: FormValues) => {
     setSubmitted(values)
+    setLastRequest(values)
+    setActiveRefinement(null)
     recommendation.mutate(values)
+    window.setTimeout(() => {
+      resultsRef.current?.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' })
+    }, 100)
+  }
+  const rerun = (refinement?: Refinement) => {
+    if (!submitted) return
+    const request: RecommendationRequest = {
+      ...submitted,
+      excludeTitles: movies.map((movie) => movie.title),
+      refinement: refinement?.instruction,
+    }
+    setLastRequest(request)
+    setActiveRefinement(refinement?.label ?? null)
+    recommendation.mutate(request)
   }
   const choosePrompt = (prompt:string) => {
     form.setValue('userPrompt',prompt,{ shouldValidate:true, shouldDirty:true })
@@ -52,9 +73,10 @@ export default function App() {
       <AnimatePresence mode="wait">
         {!submitted ? <motion.section key="idle" exit={{ opacity:0 }} className="border-y border-white/[.05] bg-white/[.015]"><div className="mx-auto grid max-w-6xl gap-8 px-5 py-12 sm:grid-cols-3 sm:px-8 lg:px-12">
           {[['01','Set the scene','Tell us what kind of evening, feeling, or story you have in mind.'],['02','We read between the lines','Mood, genre, and nuance shape a shortlist—not just an algorithm.'],['03','Press play','Discover films chosen with context, plus a reason each one belongs.']].map(([number,title,copy]) => <div key={number} className="border-l border-primary/20 pl-5"><span className="text-xs font-bold tracking-[.2em] text-primary">{number}</span><h2 className="mt-3 font-display text-xl">{title}</h2><p className="mt-2 text-sm leading-6 text-muted-foreground">{copy}</p></div>)}
-        </div></motion.section> : <motion.section key="results" initial={{ opacity:0,y:20 }} animate={{ opacity:1,y:0 }} exit={{ opacity:0 }} className="mx-auto max-w-7xl px-5 pb-24 sm:px-8 lg:px-12" aria-live="polite" aria-busy={recommendation.isPending}>
-          <div className="mb-9 flex flex-col gap-5 border-t border-white/[.07] pt-10 sm:flex-row sm:items-end sm:justify-between"><div><p className="eyebrow">Your private screening</p><h2 className="mt-2 font-display text-3xl sm:text-4xl">{recommendation.isPending ? 'Curating your watchlist…' : recommendation.isError ? 'The projector flickered' : 'Selected for this moment'}</h2><p className="mt-3 max-w-2xl truncate text-sm text-muted-foreground">“{submitted.userPrompt}”</p></div>{recommendation.isSuccess ? <Button variant="outline" onClick={() => recommendation.mutate(submitted)}><RotateCcw className="size-4" aria-hidden="true" />Regenerate</Button> : null}</div>
-          {recommendation.isPending ? <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">{Array.from({ length:submitted.count },(_,index)=><MovieSkeleton key={index} />)}</div> : recommendation.isError ? <div className="rounded-3xl border border-destructive/20 bg-destructive/[.05] px-6 py-14 text-center"><TriangleAlert className="mx-auto size-8 text-destructive" aria-hidden="true" /><h3 className="mt-5 font-display text-2xl">We couldn’t complete this screening.</h3><p className="mx-auto mt-2 max-w-lg text-sm leading-6 text-muted-foreground">{recommendation.error.message} Check that the concierge service is running, then try once more.</p><Button className="mt-6" onClick={() => recommendation.mutate(submitted)}>Try again</Button></div> : movies.length === 0 ? <div className="rounded-3xl border border-white/10 bg-white/[.025] px-6 py-14 text-center"><Film className="mx-auto size-8 text-primary" aria-hidden="true" /><h3 className="mt-5 font-display text-2xl">No films made the final cut.</h3><p className="mt-2 text-sm text-muted-foreground">Try broadening the mood or genre and let us curate again.</p></div> : <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">{movies.map((movie,index)=><MovieCard key={`${movie.title}-${movie.year}`} movie={movie} index={index} />)}</div>}
+        </div></motion.section> : <motion.section ref={resultsRef} key="results" initial={{ opacity:0,y:20 }} animate={{ opacity:1,y:0 }} exit={{ opacity:0 }} className="mx-auto max-w-7xl scroll-mt-6 px-5 pb-24 sm:px-8 lg:px-12" aria-live="polite" aria-busy={recommendation.isPending}>
+          <div className="mb-9 flex flex-col gap-5 border-t border-white/[.07] pt-10 sm:flex-row sm:items-end sm:justify-between"><div><p className="eyebrow">Your private screening</p><h2 className="mt-2 min-h-10 font-display text-3xl sm:text-4xl">{recommendation.isPending ? <LoadingHeading /> : recommendation.isError ? 'The projector flickered' : activeRefinement ? `${activeRefinement}, as requested` : 'Selected for this moment'}</h2><p className="mt-3 max-w-2xl truncate text-sm text-muted-foreground">“{submitted.userPrompt}”</p></div>{recommendation.isSuccess ? <Button variant="outline" onClick={() => rerun()}><RotateCcw className="size-4" aria-hidden="true" />Regenerate</Button> : null}</div>
+          {recommendation.isSuccess && movies.length > 0 ? <RefineControls activeLabel={activeRefinement} disabled={recommendation.isPending} onRefine={rerun} /> : null}
+          {recommendation.isPending ? <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">{Array.from({ length:submitted.count },(_,index)=><MovieSkeleton key={index} />)}</div> : recommendation.isError ? <div className="rounded-3xl border border-destructive/20 bg-destructive/[.05] px-6 py-14 text-center"><TriangleAlert className="mx-auto size-8 text-destructive" aria-hidden="true" /><h3 className="mt-5 font-display text-2xl">We couldn’t complete this screening.</h3><p className="mx-auto mt-2 max-w-lg text-sm leading-6 text-muted-foreground">{recommendation.error.message} Check that the concierge service is running, then try once more.</p><Button className="mt-6" disabled={!lastRequest} onClick={() => lastRequest && recommendation.mutate(lastRequest)}>Try again</Button></div> : movies.length === 0 ? <div className="rounded-3xl border border-white/10 bg-white/[.025] px-6 py-14 text-center"><Film className="mx-auto size-8 text-primary" aria-hidden="true" /><h3 className="mt-5 font-display text-2xl">No films made the final cut.</h3><p className="mt-2 text-sm text-muted-foreground">Try broadening the mood or genre and let us curate again.</p></div> : <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">{movies.map((movie,index)=><MovieCard key={`${movie.title}-${movie.year}`} movie={movie} index={index} />)}</div>}
         </motion.section>}
       </AnimatePresence>
     </main>

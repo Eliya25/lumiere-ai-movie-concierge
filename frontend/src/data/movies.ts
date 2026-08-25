@@ -11,6 +11,8 @@ export type Movie = {
   tmdbId?: number | null
   tmdbRating?: number | null
   voteCount?: number | null
+  trailerKey?: string | null
+  trailerUrl?: string | null
 }
 
 export type RecommendationResponse = { movies: Movie[] }

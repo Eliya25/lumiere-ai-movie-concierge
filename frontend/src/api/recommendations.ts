@@ -1,6 +1,11 @@
 import type { FormValues } from '@/App'
 import type { RecommendationResponse } from '@/data/movies'
 
+export type RecommendationRequest = FormValues & {
+  excludeTitles?: string[]
+  refinement?: string
+}
+
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000').replace(/\/$/, '')
 
 export class ApiError extends Error {
@@ -13,7 +18,7 @@ export class ApiError extends Error {
   }
 }
 
-export async function requestRecommendations(input: FormValues): Promise<RecommendationResponse> {
+export async function requestRecommendations(input: RecommendationRequest): Promise<RecommendationResponse> {
   const response = await fetch(`${API_BASE_URL}/api/recommend`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

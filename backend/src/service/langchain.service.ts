@@ -2,7 +2,7 @@
 
 import {ChatGoogle} from "@langchain/google/node";
 import {ChatPromptTemplate} from "@langchain/core/prompts";
-import { RecommendationsSchema } from "../schemas/movie.schema.js";
+import { RecommendationsSchema, type RecommendRequest } from "../schemas/movie.schema.js";
 
 const model = new ChatGoogle({
     model: "gemini-3.6-flash",
@@ -30,6 +30,7 @@ const promtTemplate = ChatPromptTemplate.fromMessages([
         - Do not invent scenes, weather, plot events, awards, cast members, release years, or ratings.
         - Explain the match using the film's tone, themes, pacing, and viewing experience.
         - Make each reason specific to the user's request, concise, and distinct from the other reasons.
+        - Never recommend a title listed under "Do not recommend".
         - If the user asks for a rainy-night film, interpret that as a desired viewing atmosphere unless rain is truly part of the film.
         - Use "Any genre" as no genre restriction.`
 
@@ -41,11 +42,14 @@ const promtTemplate = ChatPromptTemplate.fromMessages([
         Preferences:
         - Genre: {genre}
         - Mode: {mode}
-        - Number of movies: {count}`,
+        - Number of movies: {count}
+        - Refinement: {refinement}
+
+        Do not recommend: {excludeTitles}`,
     ],
 ]);
 
-export async function getRecommendations(input: {userPrompt: String; genre: string; mode: string; count: number}){
+export async function getRecommendations(input: RecommendRequest){
     //.pipe(model) = LECL -> langchain expression langauage
     //connect components into a chain
     //input - promptTemplate -> variabales - call model (gemini) - response
@@ -55,7 +59,9 @@ export async function getRecommendations(input: {userPrompt: String; genre: stri
         userPrompt: input.userPrompt,
         genre: input.genre,
         mode: input.mode,
-        count: input.count
+        count: input.count,
+        refinement: input.refinement || "None",
+        excludeTitles: input.excludeTitles?.join(", ") || "None"
 
     })
 
@@ -67,14 +73,16 @@ export async function getRecommendations(input: {userPrompt: String; genre: stri
 // zod + structure output
 const structureModel = model.withStructuredOutput(RecommendationsSchema)
 
-export async function getStructuredRecommendations(input: {userPrompt: string; genre: string; mode: string; count: number;} ){
+export async function getStructuredRecommendations(input: RecommendRequest){
     const chain = promtTemplate.pipe(structureModel)
 
     const result = await chain.invoke({
         userPrompt: input.userPrompt,
         genre: input.genre,
         mode: input.mode,
-        count: input.count
+        count: input.count,
+        refinement: input.refinement || "None",
+        excludeTitles: input.excludeTitles?.join(", ") || "None"
 
     })
 

@@ -22,7 +22,9 @@ export const RecommendRequestSchema = z.object({
     userPrompt: z.string().trim().min(12).max(500),
     genre: z.string().trim().min(1).max(50),
     mode: z.string().trim().min(1).max(50),
-    count: z.number().int().min(1).max(6)
+    count: z.number().int().min(1).max(6),
+    excludeTitles: z.array(z.string().trim().min(1).max(150)).max(24).optional(),
+    refinement: z.string().trim().min(1).max(120).optional()
 }).strict()
 
 export type Movie = z.infer<typeof MovieSchema>

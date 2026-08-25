@@ -18,6 +18,15 @@ type TmdbSearchResponse = {
     results: TmdbSearchResult[];
 };
 
+type TmdbVideo = {
+    key: string;
+    site: string;
+    type: string;
+    official: boolean;
+};
+
+type TmdbVideosResponse = { results: TmdbVideo[] };
+
 export type TmdbMovieData = {
     tmdbId: number | null;
     posterUrl: string | null;
@@ -25,6 +34,8 @@ export type TmdbMovieData = {
     overview: string | null;
     tmdbRating: number | null;
     voteCount: number | null;
+    trailerKey: string | null;
+    trailerUrl: string | null;
 };
 
 const emptyTmdbData: TmdbMovieData = {
@@ -34,10 +45,30 @@ const emptyTmdbData: TmdbMovieData = {
     overview: null,
     tmdbRating: null,
     voteCount: null,
+    trailerKey: null,
+    trailerUrl: null,
 };
 
 function imageUrl(path: string | null, size: "w500" | "w1280") {
     return path ? `${TMDB_IMAGE_URL}/${size}${path}` : null;
+}
+
+async function findTrailer(tmdbId: number, token: string) {
+    const response = await fetch(`${TMDB_API_URL}/movie/${tmdbId}/videos?language=en-US`, {
+        headers: { Authorization: `Bearer ${token}`, accept: "application/json" },
+        signal: AbortSignal.timeout(6_000),
+    });
+    if (!response.ok) throw new Error(`TMDB videos failed with status ${response.status}`);
+
+    const data = await response.json() as TmdbVideosResponse;
+    const youtube = data.results.filter((video) => video.site === "YouTube");
+    const video =
+        youtube.find((item) => item.type === "Trailer" && item.official) ??
+        youtube.find((item) => item.type === "Trailer") ??
+        youtube.find((item) => item.type === "Teaser" && item.official) ??
+        youtube.find((item) => item.type === "Teaser");
+
+    return video ? { trailerKey: video.key, trailerUrl: `https://www.youtube.com/watch?v=${video.key}` } : null;
 }
 
 async function findMovie(movie: Movie): Promise<TmdbMovieData> {
@@ -69,6 +100,7 @@ async function findMovie(movie: Movie): Promise<TmdbMovieData> {
     );
     const match = exactYearMatch ?? data.results[0];
     if (!match) return emptyTmdbData;
+    const trailer = await findTrailer(match.id, token).catch(() => null);
 
     return {
         tmdbId: match.id,
@@ -77,6 +109,8 @@ async function findMovie(movie: Movie): Promise<TmdbMovieData> {
         overview: match.overview || null,
         tmdbRating: match.vote_average || null,
         voteCount: match.vote_count || null,
+        trailerKey: trailer?.trailerKey ?? null,
+        trailerUrl: trailer?.trailerUrl ?? null,
     };
 }
 
