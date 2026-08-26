@@ -10,6 +10,7 @@ Describe the kind of evening you want. Lumière turns mood, genre, and intent in
 [![TypeScript](https://img.shields.io/badge/TypeScript-Strict-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![LangChain](https://img.shields.io/badge/LangChain-Gemini-1C3C3C)](https://js.langchain.com/)
 [![TMDB](https://img.shields.io/badge/Data-TMDB-01B4E4?logo=themoviedatabase&logoColor=white)](https://www.themoviedb.org/)
+[![CI](https://github.com/Eliya25/lumiere-ai-movie-concierge/actions/workflows/ci.yml/badge.svg)](https://github.com/Eliya25/lumiere-ai-movie-concierge/actions/workflows/ci.yml)
 [![Tests](https://img.shields.io/badge/Backend_tests-19_passing-6EAA5E)](#testing)
 
 [![Live Demo](https://img.shields.io/badge/Live_Demo-Visit_Lumière-C9A96E?style=for-the-badge&logo=vercel&logoColor=black)](https://lumiere-ai-movie-concierge.vercel.app/)
