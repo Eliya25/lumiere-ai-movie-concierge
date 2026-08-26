@@ -59,7 +59,7 @@ function imageUrl(path: string | null, size: "w500" | "w1280") {
 async function findTrailer(tmdbId: number, token: string) {
     const response = await fetch(`${TMDB_API_URL}/movie/${tmdbId}/videos?language=en-US`, {
         headers: { Authorization: `Bearer ${token}`, accept: "application/json" },
-        signal: AbortSignal.timeout(6_000),
+        signal: AbortSignal.timeout(runtimeConfig.tmdbRequestTimeoutMs),
     });
     if (!response.ok) throw new Error(`TMDB videos failed with status ${response.status}`);
 
@@ -93,7 +93,7 @@ async function findMovie(movie: Movie): Promise<TmdbMovieData> {
             Authorization: `Bearer ${token}`,
             accept: "application/json",
         },
-        signal: AbortSignal.timeout(6_000),
+        signal: AbortSignal.timeout(runtimeConfig.tmdbRequestTimeoutMs),
     });
 
     if (!response.ok) {

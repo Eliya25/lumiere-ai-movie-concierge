@@ -39,8 +39,15 @@ export async function recommendedMovies(req: Request, res: Response){
         res.set("X-Cache", "MISS").json(response)
         
     } catch (error) {
-        console.error("Recommendation request failed", error)
-        res.status(500).json({error: "Unable to create recommendations right now"})
+        console.error(JSON.stringify({
+            event: "recommendation_failed",
+            requestId: res.getHeader("X-Request-Id"),
+            errorType: error instanceof Error ? error.name : "UnknownError",
+        }));
+        res.status(503).json({
+            error: "Unable to create recommendations right now",
+            requestId: res.getHeader("X-Request-Id"),
+        })
         
     }
 }

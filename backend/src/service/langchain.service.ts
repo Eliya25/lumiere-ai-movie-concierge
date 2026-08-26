@@ -3,6 +3,7 @@
 import {ChatGoogle} from "@langchain/google/node";
 import {ChatPromptTemplate} from "@langchain/core/prompts";
 import { RecommendationsSchema, type RecommendRequest } from "../schemas/movie.schema.js";
+import { runtimeConfig } from "../config/runtime.js";
 
 const model = new ChatGoogle({
     model: "gemini-3.6-flash",
@@ -65,7 +66,6 @@ export async function getRecommendations(input: RecommendRequest){
 
     })
 
-    console.log(response.text)
     return response.text
 }
 
@@ -76,15 +76,17 @@ const structureModel = model.withStructuredOutput(RecommendationsSchema)
 export async function getStructuredRecommendations(input: RecommendRequest){
     const chain = promtTemplate.pipe(structureModel)
 
-    const result = await chain.invoke({
-        userPrompt: input.userPrompt,
-        genre: input.genre,
-        mode: input.mode,
-        count: input.count,
-        refinement: input.refinement || "None",
-        excludeTitles: input.excludeTitles?.join(", ") || "None"
-
-    })
+    const result = await chain.invoke(
+        {
+            userPrompt: input.userPrompt,
+            genre: input.genre,
+            mode: input.mode,
+            count: input.count,
+            refinement: input.refinement || "None",
+            excludeTitles: input.excludeTitles?.join(", ") || "None"
+        },
+        { signal: AbortSignal.timeout(runtimeConfig.aiRequestTimeoutMs) },
+    )
 
     return {
         ...result,
