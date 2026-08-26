@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { enrichMoviesWithTmdb } from "../src/service/tmdb.service.js";
+import { clearTmdbCache, enrichMoviesWithTmdb } from "../src/service/tmdb.service.js";
 import type { Movie } from "../src/schemas/movie.schema.js";
 
 const movie: Movie = {
@@ -17,7 +17,10 @@ const jsonResponse = (body: unknown, status = 200) => new Response(JSON.stringif
     headers: { "Content-Type": "application/json" },
 });
 
-beforeEach(() => vi.restoreAllMocks());
+beforeEach(() => {
+    vi.restoreAllMocks();
+    clearTmdbCache();
+});
 afterEach(() => {
     if (originalToken === undefined) delete process.env.TMDB_API_READ_TOKEN;
     else process.env.TMDB_API_READ_TOKEN = originalToken;
@@ -59,6 +62,18 @@ describe("TMDB enrichment", () => {
 
         const [result] = await enrichMoviesWithTmdb([movie]);
         expect(result).toMatchObject({ tmdbId: 546554, posterUrl: "https://image.tmdb.org/t/p/w500/poster.jpg", trailerKey: null, trailerUrl: null });
+    });
+
+    it("reuses cached TMDB enrichment for the same title and year", async () => {
+        process.env.TMDB_API_READ_TOKEN = "test-token";
+        const fetchSpy = vi.spyOn(globalThis, "fetch")
+            .mockResolvedValueOnce(jsonResponse({ results: [{ id: 546554, title: "Knives Out", release_date: "2019-11-27", poster_path: "/poster.jpg", backdrop_path: null, overview: "Overview", vote_average: 7.8, vote_count: 1234 }] }))
+            .mockResolvedValueOnce(jsonResponse({ results: [] }));
+
+        const [first] = await enrichMoviesWithTmdb([movie]);
+        const [second] = await enrichMoviesWithTmdb([movie]);
+        expect(first).toEqual(second);
+        expect(fetchSpy).toHaveBeenCalledTimes(2);
     });
 
     it("isolates a failed movie search", async () => {

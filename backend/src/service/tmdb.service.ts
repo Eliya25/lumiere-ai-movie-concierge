@@ -1,7 +1,10 @@
 import type { Movie } from "../schemas/movie.schema.js";
+import { TtlCache } from "../lib/ttl-cache.js";
+import { runtimeConfig } from "../config/runtime.js";
 
 const TMDB_API_URL = "https://api.themoviedb.org/3";
 const TMDB_IMAGE_URL = "https://image.tmdb.org/t/p";
+const tmdbCache = new TtlCache<string, TmdbMovieData>(runtimeConfig.tmdbCacheTtlMs, runtimeConfig.cacheMaxEntries);
 
 type TmdbSearchResult = {
     id: number;
@@ -74,6 +77,9 @@ async function findTrailer(tmdbId: number, token: string) {
 async function findMovie(movie: Movie): Promise<TmdbMovieData> {
     const token = process.env.TMDB_API_READ_TOKEN?.trim();
     if (!token) return emptyTmdbData;
+    const cacheKey = `${movie.title.trim().toLocaleLowerCase("en-US")}|${movie.year}`;
+    const cached = tmdbCache.get(cacheKey);
+    if (cached) return cached;
 
     const params = new URLSearchParams({
         query: movie.title,
@@ -102,7 +108,7 @@ async function findMovie(movie: Movie): Promise<TmdbMovieData> {
     if (!match) return emptyTmdbData;
     const trailer = await findTrailer(match.id, token).catch(() => null);
 
-    return {
+    const enrichedMovie = {
         tmdbId: match.id,
         posterUrl: imageUrl(match.poster_path, "w500"),
         backdropUrl: imageUrl(match.backdrop_path, "w1280"),
@@ -112,6 +118,12 @@ async function findMovie(movie: Movie): Promise<TmdbMovieData> {
         trailerKey: trailer?.trailerKey ?? null,
         trailerUrl: trailer?.trailerUrl ?? null,
     };
+    tmdbCache.set(cacheKey, enrichedMovie);
+    return enrichedMovie;
+}
+
+export function clearTmdbCache() {
+    tmdbCache.clear();
 }
 
 export async function enrichMoviesWithTmdb(movies: Movie[]) {

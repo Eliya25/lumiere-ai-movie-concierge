@@ -10,7 +10,7 @@ Describe the kind of evening you want. Lumière turns mood, genre, and intent in
 [![TypeScript](https://img.shields.io/badge/TypeScript-Strict-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![LangChain](https://img.shields.io/badge/LangChain-Gemini-1C3C3C)](https://js.langchain.com/)
 [![TMDB](https://img.shields.io/badge/Data-TMDB-01B4E4?logo=themoviedatabase&logoColor=white)](https://www.themoviedb.org/)
-[![Tests](https://img.shields.io/badge/Backend_tests-10_passing-6EAA5E)](#testing)
+[![Tests](https://img.shields.io/badge/Backend_tests-15_passing-6EAA5E)](#testing)
 
 </div>
 
@@ -34,6 +34,7 @@ The experience is presented through a responsive cinematic interface with delibe
 - Per-movie TMDB fault isolation with `Promise.allSettled`
 - Strict request validation and safe server-only secrets
 - Automated API and enrichment tests with Vitest and Supertest
+- Per-IP rate limiting and configurable TTL caching for AI and TMDB requests
 - Reduced-motion support and keyboard-accessible interactions
 
 ## Product Flow
@@ -61,6 +62,7 @@ flowchart TB
     end
 
     subgraph Server[Express Server]
+        Protection[Rate limiting]
         Validation[Zod request validation]
         Chain[LangChain + Gemini]
         Enrichment[TMDB enrichment service]
@@ -70,7 +72,7 @@ flowchart TB
     TMDB[TMDB API]
     YouTube[YouTube trailers]
 
-    Form --> Query --> Validation
+    Form --> Query --> Protection --> Validation
     Validation --> Chain --> Gemini
     Chain --> Enrichment --> TMDB
     Enrichment --> Query --> Results
@@ -89,6 +91,7 @@ The frontend never receives or accesses provider credentials. All Gemini and TMD
 | Forms | React Hook Form, Zod |
 | Server state | TanStack Query |
 | Backend | Express 5, TypeScript, Node.js |
+| API protection | express-rate-limit, bounded in-memory TTL caches |
 | AI orchestration | LangChain, Google Gemini |
 | Movie data | TMDB API v3 |
 | Testing | Vitest, Supertest |
@@ -147,6 +150,11 @@ Copy `backend/.env.example` to `backend/.env`, then provide your credentials:
 GOOGLE_API_KEY=your_google_api_key
 TMDB_API_READ_TOKEN=your_tmdb_api_read_access_token
 PORT=8000
+RATE_LIMIT_WINDOW_MS=900000
+RATE_LIMIT_MAX=20
+RECOMMENDATION_CACHE_TTL_MS=600000
+TMDB_CACHE_TTL_MS=86400000
+CACHE_MAX_ENTRIES=500
 ```
 
 Start the API:
@@ -228,7 +236,7 @@ Creates and enriches a movie watchlist.
 }
 ```
 
-Invalid input returns `400` with field-level validation details. Provider or recommendation failures return a safe `500` response without exposing credentials or internal error data.
+Invalid input returns `400` with field-level validation details. Exceeding the per-IP quota returns `429` with standard `RateLimit` and `Retry-After` headers. Successful responses include `X-Cache: HIT` or `X-Cache: MISS`. Provider or recommendation failures return a safe `500` response without exposing credentials or internal error data.
 
 ## Resilience and Design Decisions
 
@@ -250,6 +258,12 @@ Trailer lookup is isolated from the core movie lookup. If the Videos endpoint fa
 
 Refinement instructions are modeled separately from the original user prompt. Previously displayed titles are passed as a bounded exclusion list, keeping the original intent intact while reducing repeated recommendations.
 
+### Rate limiting and bounded caching
+
+The recommendation route is limited per IP before validation or provider work begins. Repeated identical recommendation requests are cached for 10 minutes, while successful TMDB enrichment is cached by normalized `title + year` for 24 hours. Both TTLs, the request quota, and the 500-entry memory bound are configurable through environment variables.
+
+The current stores are intentionally process-local for the single-instance portfolio runtime. A horizontally scaled deployment should replace them with a shared Redis-compatible store such as Upstash.
+
 ## Testing
 
 Run the backend suite:
@@ -270,6 +284,9 @@ Current coverage includes:
 - official YouTube trailer selection
 - Videos endpoint failure isolation
 - per-movie network failure isolation
+- TTL expiration and capacity eviction
+- TMDB cache reuse
+- standard rate-limit headers and enforced `429` responses
 
 Run TypeScript and production checks:
 
@@ -301,7 +318,8 @@ npm run build
 - [x] Contextual refinements and duplicate avoidance
 - [x] Backend validation and automated tests
 - [ ] Production deployment
-- [ ] Rate limiting and request caching
+- [x] Rate limiting and bounded request caching
+- [ ] Shared Redis-backed limits and cache for multi-instance deployment
 - [ ] End-to-end browser tests
 - [ ] Project screenshots and demo video
 
@@ -314,4 +332,3 @@ Movie metadata and imagery are provided by [The Movie Database](https://www.them
 ## Author
 
 Built by [Eliya25](https://github.com/Eliya25) as a full-stack AI portfolio project.
-

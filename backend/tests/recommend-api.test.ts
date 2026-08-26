@@ -25,6 +25,7 @@ describe("recommendation API validation", () => {
         });
         expect(response.status).toBe(400);
         expect(response.body.error).toBe("Invalid request payload");
+        expect(response.headers.ratelimit).toBeDefined();
     });
 
     it("rejects missing and unknown fields", async () => {
@@ -46,5 +47,19 @@ describe("recommendation API validation", () => {
             excludeTitles: Array.from({ length: 25 }, (_, index) => `Movie ${index}`),
         });
         expect(response.status).toBe(400);
+    });
+
+    it("returns 429 after the per-IP recommendation limit is exhausted", async () => {
+        const statuses: number[] = [];
+        for (let index = 0; index < 25; index += 1) {
+            const response = await request(app).post("/api/recommend").send({ count: 0 });
+            statuses.push(response.status);
+            if (response.status === 429) {
+                expect(response.body.error).toMatch(/Too many recommendation requests/);
+                expect(response.headers["retry-after"]).toBeDefined();
+                return;
+            }
+        }
+        expect(statuses).toContain(429);
     });
 });

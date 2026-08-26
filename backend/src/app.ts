@@ -4,7 +4,7 @@ import { recommendRouter } from "./routes/recommended.routes.js";
 
 export const app = express();
 
-app.use(cors());
+app.use(cors({ exposedHeaders: ["RateLimit", "RateLimit-Policy", "Retry-After", "X-Cache"] }));
 app.use(express.json());
 app.use("/api/recommend", recommendRouter);
 
