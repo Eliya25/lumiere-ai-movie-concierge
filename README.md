@@ -105,7 +105,7 @@ The frontend never receives or accesses provider credentials. All Gemini and TMD
 | API protection | express-rate-limit, bounded in-memory TTL caches |
 | AI orchestration | LangChain, Google Gemini |
 | Movie data | TMDB API v3 |
-| Testing | Vitest, Supertest |
+| Testing | Vitest, Supertest, Playwright |
 
 ## Repository Structure
 
@@ -128,6 +128,8 @@ lumiere-ai-movie-concierge/
 │   │   ├── data/              # Shared response types
 │   │   ├── lib/               # Utilities
 │   │   └── App.tsx
+│   ├── e2e/                   # Mocked Playwright product flow
+│   ├── playwright.config.ts
 │   └── .env.example
 └── README.md
 ```
@@ -312,6 +314,14 @@ cd ../frontend
 npm run build
 ```
 
+Run the mocked browser flow (no Gemini or TMDB credentials required):
+
+```bash
+cd frontend
+npx playwright install chromium
+npm run test:e2e
+```
+
 ## Accessibility and UX
 
 - Fully labeled form controls and inline validation
@@ -334,7 +344,7 @@ npm run build
 - [x] Production deployment
 - [x] Rate limiting and bounded request caching
 - [ ] Shared Redis-backed limits and cache for multi-instance deployment
-- [ ] End-to-end browser tests
+- [x] Mocked end-to-end recommendation flow
 - [x] Project screenshot
 - [ ] Demo video
 
