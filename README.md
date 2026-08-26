@@ -10,7 +10,10 @@ Describe the kind of evening you want. Lumière turns mood, genre, and intent in
 [![TypeScript](https://img.shields.io/badge/TypeScript-Strict-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![LangChain](https://img.shields.io/badge/LangChain-Gemini-1C3C3C)](https://js.langchain.com/)
 [![TMDB](https://img.shields.io/badge/Data-TMDB-01B4E4?logo=themoviedatabase&logoColor=white)](https://www.themoviedb.org/)
-[![Tests](https://img.shields.io/badge/Backend_tests-15_passing-6EAA5E)](#testing)
+[![Tests](https://img.shields.io/badge/Backend_tests-19_passing-6EAA5E)](#testing)
+
+[![Live Demo](https://img.shields.io/badge/Live_Demo-Visit_Lumière-C9A96E?style=for-the-badge&logo=vercel&logoColor=black)](https://lumiere-ai-movie-concierge.vercel.app/)
+[![API Health](https://img.shields.io/badge/API_Health-Check_Status-7CBF8E?style=for-the-badge&logo=vercel&logoColor=white)](https://lumiere-ai-movie-concierge-api.vercel.app/health)
 
 </div>
 
@@ -21,6 +24,12 @@ Lumière is a full-stack portfolio project that explores what a movie recommende
 Users describe a viewing mood in natural language, optionally choose a genre and tone, and receive a curated set of real films. Gemini handles the semantic recommendation work, while TMDB supplies canonical metadata, artwork, ratings, vote counts, overviews, and trailers.
 
 The experience is presented through a responsive cinematic interface with deliberate motion, accessible interactions, resilient failure states, and a refinement loop that lets users reshape a watchlist without starting over.
+
+## Live Product
+
+[Open the live application](https://lumiere-ai-movie-concierge.vercel.app/) · [Check API health](https://lumiere-ai-movie-concierge-api.vercel.app/health)
+
+![Lumière AI Movie Concierge showing a personalized three-film watchlist](docs/lumiere-demo.png)
 
 ## Highlights
 
@@ -150,6 +159,9 @@ Copy `backend/.env.example` to `backend/.env`, then provide your credentials:
 GOOGLE_API_KEY=your_google_api_key
 TMDB_API_READ_TOKEN=your_tmdb_api_read_access_token
 PORT=8000
+CORS_ALLOWED_ORIGINS=http://localhost:5173,https://lumiere-ai-movie-concierge.vercel.app
+AI_REQUEST_TIMEOUT_MS=45000
+TMDB_REQUEST_TIMEOUT_MS=6000
 RATE_LIMIT_WINDOW_MS=900000
 RATE_LIMIT_MAX=20
 RECOMMENDATION_CACHE_TTL_MS=600000
@@ -236,7 +248,7 @@ Creates and enriches a movie watchlist.
 }
 ```
 
-Invalid input returns `400` with field-level validation details. Exceeding the per-IP quota returns `429` with standard `RateLimit` and `Retry-After` headers. Successful responses include `X-Cache: HIT` or `X-Cache: MISS`. Provider or recommendation failures return a safe `500` response without exposing credentials or internal error data.
+Invalid input returns `400` with field-level validation details. Exceeding the per-IP quota returns `429` with standard `RateLimit` and `Retry-After` headers. Successful responses include `X-Cache: HIT` or `X-Cache: MISS`. Provider or recommendation failures return a safe `503` response with a request ID and without exposing credentials or internal error data.
 
 ## Resilience and Design Decisions
 
@@ -317,11 +329,12 @@ npm run build
 - [x] Movie detail dialog and external trailers
 - [x] Contextual refinements and duplicate avoidance
 - [x] Backend validation and automated tests
-- [ ] Production deployment
+- [x] Production deployment
 - [x] Rate limiting and bounded request caching
 - [ ] Shared Redis-backed limits and cache for multi-instance deployment
 - [ ] End-to-end browser tests
-- [ ] Project screenshots and demo video
+- [x] Project screenshot
+- [ ] Demo video
 
 ## Attribution
 
