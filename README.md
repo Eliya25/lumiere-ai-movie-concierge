@@ -108,7 +108,7 @@ The frontend never receives or accesses provider credentials. All Gemini and TMD
 ## Repository Structure
 
 ```text
-langchain-learning/
+lumiere-ai-movie-concierge/
 ├── backend/
 │   ├── src/
 │   │   ├── controllers/       # HTTP request handling
