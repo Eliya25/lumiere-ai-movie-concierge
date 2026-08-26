@@ -1,0 +1,16 @@
+{
+  "name": "Lumière — AI Movie Concierge",
+  "short_name": "Lumière",
+  "description": "Thoughtful AI-powered movie recommendations tailored to your mood.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0d0b0c",
+  "theme_color": "#0d0b0c",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}
