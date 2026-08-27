@@ -46,6 +46,7 @@ The experience is presented through a responsive cinematic interface with delibe
 - Strict request validation and safe server-only secrets
 - Automated API and enrichment tests with Vitest and Supertest
 - Per-IP rate limiting and configurable TTL caching for AI and TMDB requests
+- Privacy-friendly traffic analytics and real-user Core Web Vitals through Vercel
 - Reduced-motion support and keyboard-accessible interactions
 
 ## Product Flow
@@ -106,6 +107,7 @@ The frontend never receives or accesses provider credentials. All Gemini and TMD
 | AI orchestration | LangChain, Google Gemini |
 | Movie data | TMDB API v3 |
 | Testing | Vitest, Supertest, Playwright |
+| Observability | Vercel Web Analytics, Speed Insights, structured API logs |
 
 ## Repository Structure
 
