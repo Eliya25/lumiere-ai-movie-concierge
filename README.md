@@ -304,6 +304,12 @@ Current coverage includes:
 - TMDB cache reuse
 - standard rate-limit headers and enforced `429` responses
 
+Frontend component coverage includes:
+
+- form validation before API submission
+- loading feedback and recoverable error handling
+- recommendation rendering from a mocked API response
+
 Run TypeScript and production checks:
 
 ```bash
@@ -311,6 +317,8 @@ cd backend
 npx tsc --noEmit
 
 cd ../frontend
+npm test
+npm run lint
 npm run build
 ```
 
