@@ -5,7 +5,7 @@ import { chromium } from '@playwright/test'
 
 const scriptDirectory = dirname(fileURLToPath(import.meta.url))
 const projectRoot = resolve(scriptDirectory, '..', '..')
-const outputDirectory = join(projectRoot, 'docs')
+const outputDirectory = join(projectRoot, 'frontend', 'public')
 const recordingDirectory = join(outputDirectory, '.demo-recording')
 const outputPath = join(outputDirectory, 'lumiere-demo.webm')
 const appUrl = process.env.DEMO_URL ?? 'https://lumiere-ai-movie-concierge.vercel.app'

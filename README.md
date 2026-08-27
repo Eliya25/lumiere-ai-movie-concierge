@@ -31,9 +31,9 @@ The experience is presented through a responsive cinematic interface with delibe
 
 [Open the live application](https://lumiere-ai-movie-concierge.vercel.app/) · [Check API health](https://lumiere-ai-movie-concierge-api.vercel.app/health)
 
-[![Watch the 24-second Lumière product demo](docs/lumiere-demo.png)](docs/lumiere-demo.webm)
+[![Watch the 24-second Lumière product demo](docs/lumiere-demo.png)](https://lumiere-ai-movie-concierge.vercel.app/lumiere-demo.webm)
 
-**[▶ Watch the 24-second product demo](docs/lumiere-demo.webm)** — from natural-language mood to enriched recommendations and movie details.
+**[▶ Watch the 24-second product demo](https://lumiere-ai-movie-concierge.vercel.app/lumiere-demo.webm)** — from natural-language mood to enriched recommendations and movie details.
 
 ## Highlights
 
