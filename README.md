@@ -345,7 +345,7 @@ npm run test:e2e
 - `prefers-reduced-motion` support
 - Progressive image loading and stable poster aspect ratios
 
-## Roadmap
+## Project Status
 
 - [x] Structured Gemini recommendations
 - [x] TMDB artwork and metadata enrichment
@@ -355,10 +355,12 @@ npm run test:e2e
 - [x] Backend validation and automated tests
 - [x] Production deployment
 - [x] Rate limiting and bounded request caching
-- [ ] Shared Redis-backed limits and cache for multi-instance deployment
 - [x] Mocked end-to-end recommendation flow
 - [x] Project screenshot
-- [ ] Demo video
+- [x] 24-second product demo
+- [x] Portfolio-ready production release
+
+Lumière is feature-complete for its portfolio scope. Distributed Redis infrastructure and containerization are intentionally left out until a real scaling or deployment requirement justifies them.
 
 ## Attribution
 
